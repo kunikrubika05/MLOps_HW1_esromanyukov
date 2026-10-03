@@ -2,7 +2,17 @@ import json
 import os
 from typing import Any
 
-from confluent_kafka import Consumer, KafkaError, KafkaException, Producer
+from confluent_kafka import Consumer, KafkaError, Message, Producer
+
+
+class DeliveryError(RuntimeError):
+    def __init__(
+        self,
+        message: str,
+        delivered_ids: list[str],
+    ) -> None:
+        super().__init__(message)
+        self.delivered_ids = delivered_ids
 
 
 def create_consumer(
@@ -45,14 +55,29 @@ def publish_many(
     messages: list[dict[str, Any]],
 ) -> None:
     errors: list[KafkaError] = []
-    for message in messages:
-        producer.produce(
-            topic,
-            key=str(message['transaction_id']),
-            value=json.dumps(message, allow_nan=False).encode(),
-            on_delivery=lambda error, _: errors.append(error) if error else None,
-        )
+    delivered_ids: list[str] = []
+
+    def record_delivery(
+        error: KafkaError | None,
+        message: Message,
+    ) -> None:
+        if error:
+            errors.append(error)
+        else:
+            delivered_ids.append(message.key().decode())
+
+    try:
+        for message in messages:
+            producer.produce(
+                topic,
+                key=str(message['transaction_id']),
+                value=json.dumps(message, allow_nan=False).encode(),
+                on_delivery=record_delivery,
+            )
+    except Exception as error:
+        producer.flush(15)
+        raise DeliveryError(str(error), delivered_ids) from error
     if producer.flush(15):
-        raise TimeoutError('Kafka delivery timed out')
+        raise DeliveryError('Kafka delivery timed out', delivered_ids)
     if errors:
-        raise KafkaException(errors[0])
+        raise DeliveryError(str(errors[0]), delivered_ids)

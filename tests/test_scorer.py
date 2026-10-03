@@ -70,6 +70,15 @@ class ScorerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.scorer.score(row)
 
+    def test_mixed_timezones_are_rejected(
+        self,
+    ) -> None:
+        rows = self.rows.head(2).to_dict('records')
+        rows[0]['transaction_time'] = '2025-01-01T00:00:00+00:00'
+        rows[1]['transaction_time'] = '2025-01-01T00:00:00+03:00'
+        with self.assertRaisesRegex(ValueError, 'consistent timezone'):
+            self.scorer.score_many(rows)
+
 
 if __name__ == '__main__':
     unittest.main()

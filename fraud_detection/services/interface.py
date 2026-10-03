@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 from fraud_detection.database import recent_results, stored_ids
-from fraud_detection.messaging import create_producer, publish_many
+from fraud_detection.messaging import DeliveryError, create_producer, publish_many
 from fraud_detection.preprocessing import INPUT_COLUMNS, load_state, preprocess
 
 
@@ -31,6 +31,7 @@ def send_transactions(
         'error': None,
     }
     st.session_state['batch'] = batch
+    confirmed = []
     progress = st.progress(0, text='Отправка в Kafka')
     try:
         producer = create_producer()
@@ -44,9 +45,15 @@ def send_transactions(
                 )
             ]
             publish_many(producer, 'transactions', messages)
+            confirmed.extend(message['transaction_id'] for message in messages)
             sent = min(start + 1000, len(rows))
             progress.progress(sent / len(rows), text=f'Отправлено: {sent}/{len(rows)}')
+    except DeliveryError as error:
+        confirmed.extend(error.delivered_ids)
+        batch['pending'] = confirmed
+        batch['error'] = f'Отправка остановлена: {error}'
     except Exception as error:
+        batch['pending'] = confirmed
         batch['error'] = f'Отправка остановлена: {error}'
     st.rerun()
 
@@ -55,7 +62,7 @@ def show_scoring_progress() -> None:
     batch = st.session_state.get('batch')
     if not batch:
         return
-    if batch['pending'] and not batch['error']:
+    if batch['pending']:
         try:
             stored = stored_ids(batch['pending'])
         except Exception as error:
@@ -103,11 +110,11 @@ def main() -> None:
                     value=min(100, len(frame)),
                 )
                 batch = st.session_state.get('batch', {})
-                active = bool(batch.get('pending')) and not batch.get('error')
+                active = bool(batch.get('pending'))
                 if st.button('Отправить', disabled=active):
                     send_transactions(frame.head(count))
         batch = st.session_state.get('batch', {})
-        active = bool(batch.get('pending')) and not batch.get('error')
+        active = bool(batch.get('pending'))
         st.fragment(run_every=1 if active else None)(show_scoring_progress)()
     with results_tab:
         if st.button('Посмотреть результаты'):

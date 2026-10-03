@@ -28,6 +28,8 @@ def base_features(
         raise ValueError(f'Missing columns: {", ".join(sorted(missing))}')
     result = frame[INPUT_COLUMNS].copy()
     dates = pd.to_datetime(result.pop('transaction_time'), errors='raise')
+    if not pd.api.types.is_datetime64_any_dtype(dates.dtype):
+        raise ValueError('Transaction times must use a consistent timezone')
     if dates.isna().any():
         raise ValueError('Missing transaction time')
     for name, values in zip(

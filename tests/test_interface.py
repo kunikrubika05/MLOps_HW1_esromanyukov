@@ -79,6 +79,29 @@ class InterfaceTests(unittest.TestCase):
         self.assertEqual(app.get('progress')[0].proto.value, 100)
         self.assertEqual(len(app.success), 1)
 
+    def test_progress_continues_after_partial_send_error(
+        self,
+    ) -> None:
+        ids = [str(uuid4()), str(uuid4())]
+        app = AppTest.from_file(
+            str(Path(__file__).parents[1] / 'fraud_detection/services/interface.py')
+        )
+        app.session_state['batch'] = {
+            'pending': ids,
+            'total': 3,
+            'stored': 0,
+            'started': perf_counter(),
+            'elapsed': None,
+            'error': 'Отправка остановлена: Kafka delivery failed',
+        }
+        with patch('fraud_detection.database.stored_ids', return_value=set(ids)):
+            app.run()
+        self.assertFalse(app.exception)
+        self.assertEqual(app.session_state['batch']['stored'], 2)
+        self.assertEqual(app.get('progress')[0].proto.value, 66)
+        self.assertEqual(len(app.error), 1)
+        self.assertFalse(app.success)
+
 
 if __name__ == '__main__':
     unittest.main()
