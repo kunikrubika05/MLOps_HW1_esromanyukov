@@ -6,9 +6,9 @@ from uuid import uuid4
 import numpy as np
 import pandas as pd
 
-from preprocessing import preprocess
-from scorer import Scorer
-from scoring_service import score_messages
+from fraud_detection.preprocessing import preprocess
+from fraud_detection.scorer import Scorer
+from fraud_detection.services.scoring import score_messages
 
 
 class ScorerTests(unittest.TestCase):
@@ -16,7 +16,7 @@ class ScorerTests(unittest.TestCase):
         self,
     ) -> None:
         self.scorer = Scorer()
-        self.rows = pd.read_csv('demo.csv').head(10)
+        self.rows = pd.read_csv('data/demo.csv').head(10)
 
     def test_batch_and_stream_agree(
         self,

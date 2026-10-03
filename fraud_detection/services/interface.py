@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-from database import recent_results, stored_ids
-from messaging import create_producer, publish_many
-from preprocessing import INPUT_COLUMNS, load_state, preprocess
+from fraud_detection.database import recent_results, stored_ids
+from fraud_detection.messaging import create_producer, publish_many
+from fraud_detection.preprocessing import INPUT_COLUMNS, load_state, preprocess
 
 
 def send_transactions(

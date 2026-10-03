@@ -13,8 +13,12 @@ class InterfaceTests(unittest.TestCase):
         fraud: list[dict],
         scores: list[float],
     ) -> AppTest:
-        with patch('database.recent_results', return_value=(fraud, scores)):
-            app = AppTest.from_file(str(Path(__file__).with_name('interface.py'))).run()
+        with patch(
+            'fraud_detection.database.recent_results', return_value=(fraud, scores)
+        ):
+            app = AppTest.from_file(
+                str(Path(__file__).parents[1] / 'fraud_detection/services/interface.py')
+            ).run()
             app.button[0].click().run()
         self.assertEqual(len(app.exception), 0)
         return app
@@ -47,7 +51,9 @@ class InterfaceTests(unittest.TestCase):
         self,
     ) -> None:
         ids = [str(uuid4()), str(uuid4())]
-        app = AppTest.from_file(str(Path(__file__).with_name('interface.py')))
+        app = AppTest.from_file(
+            str(Path(__file__).parents[1] / 'fraud_detection/services/interface.py')
+        )
         app.session_state['batch'] = {
             'pending': ids,
             'total': 2,
@@ -56,13 +62,17 @@ class InterfaceTests(unittest.TestCase):
             'elapsed': None,
             'error': None,
         }
-        with patch('database.stored_ids', return_value={ids[0]}) as lookup:
+        with patch(
+            'fraud_detection.database.stored_ids', return_value={ids[0]}
+        ) as lookup:
             app.run()
             lookup.assert_called_once_with(ids)
         self.assertEqual(app.session_state['batch']['stored'], 1)
         self.assertEqual(app.get('progress')[0].proto.value, 50)
         self.assertEqual(len(app.success), 0)
-        with patch('database.stored_ids', return_value={ids[1]}) as lookup:
+        with patch(
+            'fraud_detection.database.stored_ids', return_value={ids[1]}
+        ) as lookup:
             app.run()
             lookup.assert_called_once_with([ids[1]])
         self.assertEqual(app.session_state['batch']['stored'], 2)

@@ -10,13 +10,13 @@
 docker compose up -d --build
 ```
 
-Откройте http://localhost:8501. Загрузите `demo.csv` или `test.csv`, выберите количество транзакций и нажмите «Отправить». Результаты обновляются кнопкой «Посмотреть результаты» в соседней вкладке. Прогресс скоринга обновляется автоматически.
+Откройте http://localhost:8501. Загрузите `data/demo.csv` или `test.csv`, выберите количество транзакций и нажмите «Отправить». Результаты обновляются кнопкой «Посмотреть результаты» в соседней вкладке. Прогресс скоринга обновляется автоматически.
 
 ## Проверка
 
 ```sh
-docker compose exec interface python check.py
-docker compose exec interface python -m unittest test_scorer test_interface
+docker compose exec interface python -m tests.integration
+docker compose exec interface python -m unittest discover -s tests
 ```
 
 Первая команда проверяет полный поток и оставляет тестовые записи в базе. Вторая проверяет модель и интерфейс.
@@ -30,5 +30,5 @@ docker compose exec interface python -m unittest test_scorer test_interface
 Повторная подготовка артефактов с зависимостями из `requirements.txt`:
 
 ```sh
-python prepare_artifacts.py --train /path/to/train.csv --model /path/to/my_catboost.cbm
+python -m scripts.prepare_artifacts --train /path/to/train.csv --model /path/to/my_catboost.cbm
 ```

@@ -5,8 +5,8 @@ from uuid import UUID
 
 from confluent_kafka import KafkaException, Message
 
-from messaging import create_consumer, create_producer, publish_many
-from scorer import Scorer
+from fraud_detection.messaging import create_consumer, create_producer, publish_many
+from fraud_detection.scorer import Scorer
 
 
 def score_messages(

@@ -5,8 +5,8 @@ from uuid import UUID
 
 from confluent_kafka import KafkaException
 
-from database import connect
-from messaging import create_consumer
+from fraud_detection.database import connect
+from fraud_detection.messaging import create_consumer
 
 
 def main() -> None:

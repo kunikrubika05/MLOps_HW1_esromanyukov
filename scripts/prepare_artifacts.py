@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from catboost import CatBoostClassifier
 
-from preprocessing import (
+from fraud_detection.preprocessing import (
     CATEGORICAL_COLUMNS,
     NUMERIC_COLUMNS,
     TIME_COLUMNS,

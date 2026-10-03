@@ -4,9 +4,9 @@ from uuid import uuid4
 
 import pandas as pd
 
-from database import connect, recent_results
-from messaging import create_consumer, create_producer, publish
-from scorer import Scorer
+from fraud_detection.database import connect, recent_results
+from fraud_detection.messaging import create_consumer, create_producer, publish
+from fraud_detection.scorer import Scorer
 
 
 def wait_for_rows(
@@ -30,7 +30,7 @@ def main() -> None:
     producer = create_producer()
     consumer = create_consumer('verification-' + str(uuid4()), 'scores')
     model = Scorer()
-    rows = pd.read_csv('demo.csv').to_dict('records')
+    rows = pd.read_csv('data/demo.csv').to_dict('records')
     ids = [str(uuid4()) for _ in rows]
     expected = {key: model.score(row) for key, row in zip(ids, rows, strict=True)}
     try:

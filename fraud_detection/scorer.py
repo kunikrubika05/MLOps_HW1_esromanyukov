@@ -4,7 +4,7 @@ from typing import Any
 import pandas as pd
 from catboost import CatBoostClassifier
 
-from preprocessing import load_state, preprocess
+from fraud_detection.preprocessing import load_state, preprocess
 
 
 class Scorer:
